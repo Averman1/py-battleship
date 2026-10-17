@@ -58,17 +58,17 @@ class Battleship:
             ship = self.field[location]
             row, column = location
             ship.fire(row, column)
-            if ship.is_drowned is True:
+            if ship.is_drowned:
                 return "Sunk!"
             return "Hit!"
-        else:
-            self.misses.add(location)
-            return "Miss!"
+
+        self.misses.add(location)
+        return "Miss!"
 
     def is_game_over(self) -> bool:
         return all(ship.is_drowned for ship in self.ships)
 
-    def display(self) -> None:
+    def print_field(self) -> None:
         for row in range(10):
             row_symbols = []
             for column in range(10):
@@ -115,16 +115,17 @@ class Battleship:
                     raise ValueError("Ships cannot overlap.")
                 all_decks[coord] = ship
 
-            for current_ship in self.ships:
-                for deck in current_ship.decks:
-                    for dr in (-1, 0, 1):
-                        for dc in (-1, 0, 1):
-                            if dr == 0 and dc == 0:
-                                continue
-                            neighbor = (deck.row + dr, deck.column + dc)
-                            if (neighbor in all_decks
-                                    and all_decks[neighbor] != current_ship):
-                                raise ValueError(
-                                    "Ships shouldn't be located "
-                                    "in neighboring cells."
-                                )
+        for current_ship in self.ships:
+            for deck in current_ship.decks:
+                for dr in (-1, 0, 1):
+                    for dc in (-1, 0, 1):
+                        if dr == 0 and dc == 0:
+                            continue
+                        neighbor = (deck.row + dr, deck.column + dc)
+                        if (neighbor in all_decks
+                                and all_decks[neighbor]
+                                is not current_ship):
+                            raise ValueError(
+                                "Ships shouldn't be located "
+                                "in neighboring cells."
+                            )
