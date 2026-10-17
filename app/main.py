@@ -46,6 +46,7 @@ class Battleship:
             ship if isinstance(ship, Ship) else Ship(ship[0], ship[1])
             for ship in ships
         ]
+        self._validate_field()
         self.field = {}
         self.misses = set()
         for ship in self.ships:
@@ -65,12 +66,7 @@ class Battleship:
             return "Miss!"
 
     def is_game_over(self) -> bool:
-        return all(
-            all(
-                deck.is_damaged
-                for deck in ship
-            ) for ship in self.ships
-        )
+        return all(ship.is_drowned for ship in self.ships)
 
     def display(self) -> None:
         for row in range(10):
@@ -90,9 +86,45 @@ class Battleship:
                     if ship.is_drowned:
                         row_symbols.append("x")
                     elif deck.is_alive:
-                        row_symbols.append("*")
-                    else:
                         row_symbols.append(u"\u25A1")
+                    else:
+                        row_symbols.append("*")
                 else:
                     row_symbols.append("~")
             print(" ".join(row_symbols))
+
+    def _validate_field(self) -> None:
+        if len(self.ships) != 10:
+            raise ValueError("The total number of ships should be 10.")
+
+        lengths = [len(ship.decks) for ship in self.ships]
+        expected_counts = {1: 4, 2: 3, 3: 2, 4: 1}
+
+        for length, expected_count in expected_counts.items():
+            if lengths.count(length) != expected_count:
+                raise ValueError(
+                    f"There should be {expected_count} "
+                    f"ships with length {length}."
+                )
+
+        all_decks = {}
+        for ship in self.ships:
+            for deck in ship.decks:
+                coord = (deck.row, deck.column)
+                if coord in all_decks:
+                    raise ValueError("Ships cannot overlap.")
+                all_decks[coord] = ship
+
+            for current_ship in self.ships:
+                for deck in current_ship.decks:
+                    for dr in (-1, 0, 1):
+                        for dc in (-1, 0, 1):
+                            if dr == 0 and dc == 0:
+                                continue
+                            neighbor = (deck.row + dr, deck.column + dc)
+                            if (neighbor in all_decks
+                                    and all_decks[neighbor] != current_ship):
+                                raise ValueError(
+                                    "Ships shouldn't be located "
+                                    "in neighboring cells."
+                                )
